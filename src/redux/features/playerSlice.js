@@ -1,5 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { API, authAxios } from "../../components/api";
+import { API, authAxios, getDispositionFilename } from "../../components/api";
+
+import { toast } from "react-toastify";
 
 const initialState = {
   mode: 0,
@@ -13,7 +15,50 @@ const initialState = {
   playerHistoryPreview: [],
   compareMode: false,
   selectedPlayers: [],
+  downloading: false,
 };
+
+export const textDownload = createAsyncThunk(
+  "prospects/textDownload",
+  async (options, thunkAPI) => {
+    try {
+      let response = await authAxios(`${API}/applicants/download/get-transcript/${options.id}/`, {
+        responseType: "blob",
+      });
+      return { response: response, name: options.name };
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.message);
+    }
+  }
+);
+
+export const excelDownload = createAsyncThunk(
+  "player/excelDownload",
+  async (options, thunkAPI) => {
+    try {
+      let response = await authAxios(`${API}/applicants/download/get-excel/${options.id}/`, {
+        responseType: "blob",
+      });
+      return { response: response, name: options.name };
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.message);
+    }
+  }
+);
+
+export const videoDownload = createAsyncThunk(
+  "player/videoDownload",
+  async (options, thunkAPI) => {
+    try {
+      let response = await authAxios(`${API}/applicants/download/get-video/${options.id}/`, {
+        responseType: "blob",
+      });
+      return { data: response.data, name: options.name };
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.message);
+    }
+  }
+);
 
 export const fetchPlayers = createAsyncThunk(
   "player/fetchPlayers",
@@ -231,6 +276,75 @@ export const playerSlice = createSlice({
         state.playerHistoryPreview = state.playerHistoryPreview.filter(
           (item) => item[2] !== action.payload.id
         );
+      })
+
+      .addCase(textDownload.pending, (state) => {
+        state.downloading = true;
+      })
+      .addCase(textDownload.fulfilled, (state, action) => {
+        const url = window.URL.createObjectURL(
+          new Blob([action.payload.response.data], { type: "text/plain" })
+        );
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute(
+          "download",
+          getDispositionFilename(
+            action.payload.response.headers["content-disposition"]
+          )
+        );
+        document.body.appendChild(link);
+        link.click();
+        state.downloading = false;
+      })
+      .addCase(textDownload.rejected, (state) => {
+        state.downloading = false;
+        toast.info("Content not available");
+      })
+      
+      .addCase(excelDownload.pending, (state) => {
+        state.downloading = true;
+      })
+      .addCase(excelDownload.fulfilled, (state, action) => {
+        let response = action.payload.response;
+
+        const url = window.URL.createObjectURL(
+          new Blob([response.data], {
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          })
+        );
+        const link = document.createElement("a");
+        link.href = url;
+        let name = getDispositionFilename(
+          response.headers["content-disposition"]
+        );
+        link.setAttribute("download", `${name}`);
+        document.body.appendChild(link);
+        link.click();
+        state.downloading = false;
+      })
+      .addCase(excelDownload.rejected, (state, action) => {
+        state.downloading = false;
+        toast.info("Content not available");
+      })
+
+      .addCase(videoDownload.pending, (state) => {
+        state.downloading = true;
+      })
+      .addCase(videoDownload.fulfilled, (state, action) => {
+        const url = window.URL.createObjectURL(
+          new Blob([action.payload.data], { type: "application/zip" })
+        );
+        let link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", `${action.payload.name}.zip`);
+        document.body.appendChild(link);
+        link.click();
+        state.downloading = false;
+      })
+      .addCase(videoDownload.rejected, (state) => {
+        state.downloading = false;
+        toast.info("Content not available");
       })      
   },
 });

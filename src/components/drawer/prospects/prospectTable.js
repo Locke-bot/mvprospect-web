@@ -2,6 +2,9 @@ import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import {
+  excelDownload,
+  videoDownload,
+  textDownload,
   setPlayers,
   setPlayer,
   setCompareMode,
@@ -11,15 +14,28 @@ import {
 import clsx from "clsx";
 import { styled } from "@mui/material/styles";
 import TableCell from "@mui/material/TableCell";
-import { Divider, Typography } from "@mui/material";
+import { Box, CircularProgress, Divider, IconButton, ListItemIcon, Menu, MenuItem, Tooltip, Typography } from "@mui/material";
 
 import ArrowDropUpOutlinedIcon from "@mui/icons-material/ArrowDropUpOutlined";
 import ArrowDropDownOutlinedIcon from "@mui/icons-material/ArrowDropDownOutlined";
-
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import CheckIcon from "@mui/icons-material/Check";
+import DescriptionIcon from "@mui/icons-material/Description";
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
+import VideoFileIcon from "@mui/icons-material/VideoFile";
+import TableChartIcon from "@mui/icons-material/TableChart";
 
 import Paper from "@mui/material/Paper";
 import { AutoSizer, Column, Table } from "react-virtualized";
+import { makeStyles } from "@mui/styles";
+
+const useStyles = makeStyles({
+  prospectWord: {
+    font: "normal normal bold 16px/18px Sofia Sans !important",
+    letterSpacing: "0 !important",
+    color: "#4B5155",
+  },
+});
 
 const classes = {
   flexContainer: "ReactVirtualizedDemo-flexContainer",
@@ -131,6 +147,33 @@ class MuiVirtualizedTable extends React.PureComponent {
         align="left"
         onClick={(e) => this.props.playersClicked(e, rowData["player"])}
       >
+        <IconButton
+          title={
+            this.props.downloading ? "Download ongoing..." : "Download files"
+          }
+          style={{
+            position: "absolute",
+            right: 40,
+            color:
+              this.props.radioValue !== rowData["player"]
+                ? "#AFBBC6"
+                : undefined,
+          }}
+          disableRipple
+          onClick={(e) => {
+            e.stopPropagation();
+            this.props.setDownloadsElPlayer(rowData["player"]);
+            this.props.setDownloadsEl(e.target);
+            this.props.setOpenDownloads(true);
+            // this.props.downloadFiles(rowData["player"]);
+          }}
+        >
+          <MoreVertIcon
+            style={{ transform: "scale(0.8)" }}
+            className="close-menu close-delete-col"
+          />
+        </IconButton>
+
         {this.props.players.includes(rowData["player"]) ? (
           <CheckIcon
             style={{
@@ -257,14 +300,22 @@ class MuiVirtualizedTable extends React.PureComponent {
 const VirtualizedTable = styled(MuiVirtualizedTable)(styles);
 
 export default function ReactVirtualizedTable({ rows }) {
+  const muiClasses = useStyles();
   const playersRef = useRef({});
   const dispatch = useDispatch();
 
-  const { allPlayers, compareMode, player, players, pinned, selectedPlayers } =
+  const { allPlayers, compareMode, player, players, playerIdMap, pinned, selectedPlayers, downloading  } =
     useSelector((state) => state.playerData);
 
   const { searchValue } = useSelector((state) => state.uiData);
   const [nameSort, setNameSort] = useState(0);
+
+  const [openDownloads, setOpenDownloads] = useState(false);
+  const [downloadsEl, setDownloadsEl] = useState(null);
+  const [downloadsElPlayer, setDownloadsElPlayer] = useState(null);
+
+  const [prospectDownloading, setProspectDownloading] = useState(null);
+  const [downloadType, setDownloadType] = useState(null);
 
   const reorderByLastName = (array, mode) => {
     array = array.slice();
@@ -324,28 +375,29 @@ export default function ReactVirtualizedTable({ rows }) {
   }, [nameSort, allPlayers]);
 
   const playersClicked = (e, c) => {
-    if (!c.trim()){ return }
-    
+    if (!c.trim()) {
+      return;
+    }
+
     if (player === c) {
-        dispatch(setPlayer(""));
+      dispatch(setPlayer(""));
     } else {
       if (player || selectedPlayers.length) {
         if (compareMode) {
           if (selectedPlayers.includes(c)) {
             let p = selectedPlayers.slice();
             p.splice(p.indexOf(c), 1);
-            
+
             dispatch(setCompareMode(false));
             dispatch(setPlayer(p[0]));
             dispatch(setSelectedPlayers([]));
           } else {
             dispatch(setSelectedPlayers([selectedPlayers[1], c]));
           }
-        }
-        else {
+        } else {
           dispatch(setSelectedPlayers([player, c]));
           dispatch(setCompareMode(true));
-          dispatch(setPlayer(""))
+          dispatch(setPlayer(""));
         }
       } else {
         dispatch(setPlayer(c));
@@ -357,8 +409,177 @@ export default function ReactVirtualizedTable({ rows }) {
     setNameSort((nameSort + 1) % 3);
   };
 
+  const downloadVideo = (player) => {
+    if (!downloading) {
+      dispatch(
+        videoDownload({
+          id: playerIdMap[player],
+          name: player.toLowerCase().replace(", ", "_").replace(" ", "_"),
+        })
+      );
+      setProspectDownloading(player);
+      setDownloadType("video");
+    }
+  };
+
+  const downloadExcel = (player) => {
+    if (!downloading) {
+      dispatch(
+        excelDownload({
+          id: playerIdMap[player],
+          name: player.toLowerCase().replace(", ", "_").replace(" ", "_"),
+        })
+      );
+      setProspectDownloading(player);
+      setDownloadType("excel");
+    }
+  };
+
+  const downloadText = (player) => {
+    console.log('lalkd', player)
+    if (!downloading) {
+      dispatch(
+        textDownload({
+          id: playerIdMap[player],
+          name: player.toLowerCase().replace(", ", "_").replace(" ", "_"),
+        })
+      );
+      setProspectDownloading(player);
+      setDownloadType("text");
+    }
+  };
+
   return (
     <React.Fragment>
+      <Menu
+        id="downloads-popover"
+        open={openDownloads}
+        anchorEl={downloadsEl}
+        onClose={() => setOpenDownloads(false)}
+        anchorOrigin={{
+          vertical: "bottom",
+          horizontal: "left",
+        }}
+      >
+        <MenuItem
+          onClick={() =>
+            downloading ? void 0 : downloadText(downloadsElPlayer)
+          }
+        >
+          <Tooltip
+            title={
+              !downloading
+                ? ""
+                : downloading &&
+                  prospectDownloading === downloadsElPlayer &&
+                  downloadType == "text"
+                ? "Download ongoing"
+                : "concurrent downloads not allowed"
+            }
+          >
+            <Box style={{ display: "flex", alignItems: "center" }}>
+              <ListItemIcon>
+                {downloading &&
+                prospectDownloading === downloadsElPlayer &&
+                downloadType == "text" ? (
+                  <CircularProgress
+                    style={{
+                      width: "24px",
+                      height: "24px",
+                      color: "rgb(175, 187, 198)",
+                    }}
+                    className="close-menu close-delete-col"
+                  />
+                ) : (
+                  <DescriptionIcon style={{ color: "rgb(175, 187, 198)" }} />
+                )}
+              </ListItemIcon>
+              <Typography className={muiClasses.prospectWord}>
+                Download Text
+              </Typography>
+            </Box>
+          </Tooltip>
+        </MenuItem>
+        <MenuItem
+          onClick={() =>
+            downloading ? void 0 : downloadExcel(downloadsElPlayer)
+          }
+        >
+          <Tooltip
+            title={
+              !downloading
+                ? ""
+                : downloading &&
+                  prospectDownloading === downloadsElPlayer &&
+                  downloadType == "excel"
+                ? "Download ongoing"
+                : "concurrent downloads not allowed"
+            }
+          >
+            <Box style={{ display: "flex", alignItems: "center" }}>
+              <ListItemIcon>
+                {downloading &&
+                prospectDownloading === downloadsElPlayer &&
+                downloadType == "excel" ? (
+                  <CircularProgress
+                    style={{
+                      width: "24px",
+                      height: "24px",
+                      color: "rgb(175, 187, 198)",
+                    }}
+                    className="close-menu close-delete-col"
+                  />
+                ) : (
+                  <TableChartIcon style={{ color: "rgb(175, 187, 198)" }} />
+                )}
+              </ListItemIcon>
+              <Typography className={muiClasses.prospectWord}>
+                Download Excel
+              </Typography>
+            </Box>
+          </Tooltip>
+        </MenuItem>
+        <MenuItem
+          onClick={() =>
+            downloading ? void 0 : downloadVideo(downloadsElPlayer)
+          }
+        >
+          <Tooltip
+            title={
+              !downloading
+                ? ""
+                : downloading &&
+                  prospectDownloading === downloadsElPlayer &&
+                  downloadType == "video"
+                ? "Download ongoing"
+                : "concurrent downloads not allowed"
+            }
+          >
+            <Box style={{ display: "flex", alignItems: "center" }}>
+              <ListItemIcon>
+                {downloading &&
+                prospectDownloading === downloadsElPlayer &&
+                downloadType == "video" ? (
+                  <CircularProgress
+                    style={{
+                      width: "24px",
+                      height: "24px",
+                      color: "rgb(175, 187, 198)",
+                    }}
+                    className="close-menu close-delete-col"
+                  />
+                ) : (
+                  <VideoFileIcon style={{ color: "rgb(175, 187, 198)" }} />
+                )}
+              </ListItemIcon>
+              <Typography className={muiClasses.prospectWord}>
+                Download Video
+              </Typography>
+            </Box>
+          </Tooltip>
+        </MenuItem>
+      </Menu>
+
       <Paper style={{ flexGrow: 1, width: "100%", boxShadow: "unset" }}>
         <VirtualizedTable
           playersRef={playersRef}
@@ -369,6 +590,9 @@ export default function ReactVirtualizedTable({ rows }) {
           players={compareMode ? selectedPlayers : [player]}
           pinned={pinned}
           sortFunc={sortFunc}
+          setDownloadsElPlayer={setDownloadsElPlayer}
+          setOpenDownloads={setOpenDownloads}
+          setDownloadsEl={setDownloadsEl}
           columns={[
             {
               width: "100%",

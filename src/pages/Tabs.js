@@ -223,8 +223,7 @@ function TabsComponent() {
       </Box>
       <Box style={{ opacity: value === 0 ? 1 : 0 }}>
         {/* value as to be zero for the Minidrawer to open */}
-        {console.log('stuff', value||compareMode)}
-        <MiniDrawer value={value||compareMode} />
+        <MiniDrawer value={value} />
       </Box>
     </Box>
   );

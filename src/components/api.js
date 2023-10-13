@@ -2,22 +2,22 @@ import axios from 'axios'
 import jwt_decode from "jwt-decode"
 import dayjs from 'dayjs'
 
-export const API = (window.location.href.includes('localhost') || window.location.href.includes('127.0.0.1')) ? 'http://127.0.0.1:8000/api/v1' : 'https://txrchat-wrvliqvr4q-uc.a.run.app/api/v1'
-// export const API = 'https://txrchat-wrvliqvr4q-uc.a.run.app/api/v1'
+// export const API = (window.location.href.includes('localhost') || window.location.href.includes('127.0.0.1')) ? 'http://127.0.0.1:8000/api/v1' : 'https://virscout2-oe53djcg2a-uc.a.run.app/api/v1'
+export const API = 'https://virscout2-oe53djcg2a-uc.a.run.app/api/v1'
 
-// export const DOC_WS_API =`wss://txrchat-wrvliqvr4q-uc.a.run.app/ws/doc/`;
-export const DOC_WS_API =
-window.location.href.includes("localhost") ||
-window.location.href.includes("127.0.0.1")
-? `ws://127.0.0.1:8000/ws/doc/`
-: `wss://txrchat-wrvliqvr4q-uc.a.run.app/ws/doc/`;
+export const DOC_WS_API =`wss://virscout2-oe53djcg2a-uc.a.run.app/ws/doc/`;
+// export const DOC_WS_API =
+// window.location.href.includes("localhost") ||
+// window.location.href.includes("127.0.0.1")
+// ? `ws://127.0.0.1:8000/ws/doc/`
+// : `wss://virscout2-oe53djcg2a-uc.a.run.app/ws/doc/`;
 
-// export const COMPARISON_WS_API =`wss://txrchat-wrvliqvr4q-uc.a.run.app/ws/comparison/`;
-export const COMPARISON_WS_API =
-window.location.href.includes("localhost") ||
-window.location.href.includes("127.0.0.1")
-? `ws://127.0.0.1:8000/ws/comparison/`
-: `wss://txrchat-wrvliqvr4q-uc.a.run.app/ws/comparison/`;
+export const COMPARISON_WS_API =`wss://virscout2-oe53djcg2a-uc.a.run.app/ws/comparison/`;
+// export const COMPARISON_WS_API =
+// window.location.href.includes("localhost") ||
+// window.location.href.includes("127.0.0.1")
+// ? `ws://127.0.0.1:8000/ws/comparison/`
+// : `wss://virscout2-oe53djcg2a-uc.a.run.app/ws/comparison/`;
 
 let authTokens = localStorage.getItem('authTokens') ? JSON.parse(localStorage.getItem('authTokens')) : null
 export const authAxios = axios.create({

@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { API, authAxios, getDispositionFilename } from "../../components/api";
-
+import JSZip from "jszip";
 import { toast } from "react-toastify";
 
 const initialState = {
@@ -23,6 +23,20 @@ export const textDownload = createAsyncThunk(
   async (options, thunkAPI) => {
     try {
       let response = await authAxios(`${API}/applicants/download/get-transcript/${options.id}/`, {
+        responseType: "blob",
+      });
+      return { response: response, name: options.name };
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.message);
+    }
+  }
+);
+
+export const pdfDownload = createAsyncThunk(
+  "prospects/pdfDownload",
+  async (options, thunkAPI) => {
+    try {
+      let response = await authAxios(`${API}/applicants/download/get-pdf/${options.id}/`, {
         responseType: "blob",
       });
       return { response: response, name: options.name };
@@ -345,7 +359,58 @@ export const playerSlice = createSlice({
       .addCase(videoDownload.rejected, (state) => {
         state.downloading = false;
         toast.info("Content not available");
-      })      
+      })
+
+      .addCase(pdfDownload.pending, (state) => {
+        state.downloading = true;
+      })
+      .addCase(pdfDownload.fulfilled, (state, action) => {
+        let response = action.payload.response;
+        let contentType = response.headers["content-type"];
+
+        if (contentType === "application/x-zip-compressed") {
+          let new_zip = new JSZip();
+          let file, link;
+          const links = [];
+          new_zip.loadAsync(response.data).then(async function (zipped) {
+            for (let filename of Object.keys(zipped.files)) {
+              file = await zipped
+                .file(filename)
+                .async("blob")
+                .then(function success(content) {
+                  const url = window.URL.createObjectURL(content);
+                  link = document.createElement("a");
+                  link.href = url;
+
+                  link.setAttribute("download", `${filename}`);
+                  document.body.appendChild(link);
+                  links.push(link);
+                });
+            }
+            for (link of links) {
+              link.click();
+            }
+          });
+        } else {
+          // Catchers and Pt
+          const url = window.URL.createObjectURL(
+            new Blob([response.data], { type: "application/pdf" })
+          );
+          const link = document.createElement("a");
+          link.href = url;
+          let name = getDispositionFilename(
+            response.headers["content-disposition"]
+          );
+          link.setAttribute("download", `${name}`);
+          document.body.appendChild(link);
+          link.click();
+        }
+        state.downloading = false;
+      })
+      .addCase(pdfDownload.rejected, (state, action) => {
+        state.downloading = false;
+        toast.info("Content not available");
+      })
   },
 });
 

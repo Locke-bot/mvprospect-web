@@ -9,6 +9,7 @@ import {
   setPlayer,
   setCompareMode,
   setSelectedPlayers,
+  pdfDownload,
 } from "../../../redux/features/playerSlice";
 
 import clsx from "clsx";
@@ -449,6 +450,19 @@ export default function ReactVirtualizedTable({ rows }) {
     }
   };
 
+  const downloadPDF = (player) => {
+    if (!downloading) {
+      dispatch(
+        pdfDownload({
+          id: playerIdMap[player],
+          name: player.toLowerCase().replace(", ", "_").replace(" ", "_"),
+        })
+      );
+      setProspectDownloading(player);
+      setDownloadType("pdf");
+    }
+  };
+
   return (
     <React.Fragment>
       <Menu
@@ -500,6 +514,45 @@ export default function ReactVirtualizedTable({ rows }) {
             </Box>
           </Tooltip>
         </MenuItem>
+        <MenuItem
+          onClick={() =>
+            downloading ? void 0 : downloadPDF(downloadsElPlayer)
+          }
+        >
+          <Tooltip
+            title={
+              !downloading
+                ? ""
+                : downloading &&
+                  prospectDownloading === downloadsElPlayer &&
+                  downloadType == "pdf"
+                ? "Download ongoing"
+                : "concurrent downloads not allowed"
+            }
+          >
+            <Box style={{ display: "flex", alignItems: "center" }}>
+              <ListItemIcon>
+                {downloading &&
+                prospectDownloading === downloadsElPlayer &&
+                downloadType == "pdf" ? (
+                  <CircularProgress
+                    style={{
+                      width: "24px",
+                      height: "24px",
+                      color: "rgb(175, 187, 198)",
+                    }}
+                    className="close-menu close-delete-col"
+                  />
+                ) : (
+                  <PictureAsPdfIcon style={{ color: "rgb(175, 187, 198)" }} />
+                )}
+              </ListItemIcon>
+              <Typography className={muiClasses.prospectWord}>
+                Download PDF
+              </Typography>
+            </Box>
+          </Tooltip>
+        </MenuItem>        
         <MenuItem
           onClick={() =>
             downloading ? void 0 : downloadExcel(downloadsElPlayer)

@@ -1,0 +1,5 @@
+dispatch:
+  # Serve all static files with url ending with a file extension
+  # Catch all handler to index.html
+  - url: chat.txrchat.com/*
+    service: default

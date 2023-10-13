@@ -56,7 +56,7 @@ function TabPanel(props) {
         ) : (
           <Box className={classes.boxHeader}>
             <Box>
-              TXRChat -{" "}
+              MVPChat -{" "}
               {!player ? (
                 "select a player to begin"
               ) : (

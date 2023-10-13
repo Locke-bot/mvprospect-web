@@ -126,7 +126,7 @@ export default function LogIn() {
             }}
           >
             On-Demand Prospect Insights<br />
-            for Texas Rangers
+            for Major League Sports
           </Typography>
 
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 5 }}

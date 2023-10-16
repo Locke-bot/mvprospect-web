@@ -9,13 +9,13 @@ import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 
 import DeleteIcon from "@mui/icons-material/DeleteOutlineOutlined";
-import DescriptionIcon from "@mui/icons-material/Description";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import DownloadIcon from "@mui/icons-material/CloudDownloadOutlined";
 import ShareIcon from "@mui/icons-material/Share";
 
 import DocDup from "../../assets/document-duplication.png";
+import DocSingle from "../../assets/document-single.png";
 
 import { makeStyles } from "@mui/styles";
 import {
@@ -406,9 +406,7 @@ export default function MiniDrawer({ value }) {
                             {item[3].split(",").length > 1 ? (
                               <img src={DocDup} alt="" width={20} />
                             ) : (
-                              <DescriptionIcon
-                                style={{ color: "rgb(175, 187, 198)" }}
-                              />
+                              <img src={DocSingle} alt="" width={15} />
                             )}
                           </ListItemButton>
                         </Box>
@@ -519,9 +517,7 @@ export default function MiniDrawer({ value }) {
                       {item[3].split(",").length > 1 ? (
                         <img src={DocDup} alt="" width={20} />
                       ) : (
-                        <DescriptionIcon
-                          style={{ color: "rgb(175, 187, 198)" }}
-                        />
+                        <img src={DocSingle} alt="" width={15} />
                       )}
                     </ListItemButton>
                   )}

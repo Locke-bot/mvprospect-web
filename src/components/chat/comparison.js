@@ -16,7 +16,9 @@ import SendIcon from "@mui/icons-material/Send";
 import CloseIcon from "@mui/icons-material/HighlightOff";
 
 import {
+  fetchPlayerHistoryPreview,
   setCurrentChat,
+  setCurrentHistoryId,
 } from "../../redux/features/playerSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { MoreVertOutlined } from "@mui/icons-material";
@@ -58,7 +60,7 @@ function Chat() {
   const chatRef = useRef(null);
   const inputRef = useRef(null)
 
-  const { playerIdMap, currentChat, selectedPlayers } =
+  const { currentChat, currentHistoryId, playerIdMap, selectedPlayers } =
     useSelector((state) => state.playerData);
 
   const [answers, setAnswers] = React.useState([]);
@@ -112,6 +114,11 @@ function Chat() {
           clearTimeout(responseTimeout);
           responseTimeout = null;
         }
+
+        dispatch(
+          setCurrentHistoryId(JSON.parse(lastMessage.data).history_uuid)
+        );
+        dispatch(fetchPlayerHistoryPreview({ reset: false, multiple: true }));        
         setControlsText("");
       }
       if (JSON.parse(lastMessage?.data)?.message === "token") {
@@ -184,8 +191,7 @@ function Chat() {
         JSON.stringify({
           action: "doc",
           question: question.trim(),
-          // chat_history_id: currentHistoryId,
-          chat_history: currentChat.slice(0, -1),
+          chat_history_id: currentHistoryId,
           player_ids: selectedPlayers.map((item) => playerIdMap[item])
         })
       );

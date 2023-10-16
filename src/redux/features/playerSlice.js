@@ -16,15 +16,47 @@ const initialState = {
   compareMode: false,
   selectedPlayers: [],
   downloading: false,
+  pinned: [],
 };
 
-export const textDownload = createAsyncThunk(
-  "prospects/textDownload",
+export const fetchPinned = createAsyncThunk(
+  "player/fetchPinned",
   async (options, thunkAPI) => {
     try {
-      let response = await authAxios(`${API}/applicants/download/get-transcript/${options.id}/`, {
-        responseType: "blob",
-      });
+      let response = await authAxios(`${API}/applicants/pinned/`);
+      return await { data: response.data, ...options };
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.message);
+    }
+  }
+);
+
+export const togglePinned = createAsyncThunk(
+  "player/togglePinned",
+  async (options, thunkAPI) => {
+    console.log("toggle?");
+    try {
+      let response = await authAxios.post(
+        `${API}/applicants/pinned/${options.id}/`
+      );
+
+      return await { data: response, ...options };
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.message);
+    }
+  }
+);
+
+export const textDownload = createAsyncThunk(
+  "player/textDownload",
+  async (options, thunkAPI) => {
+    try {
+      let response = await authAxios(
+        `${API}/applicants/download/get-transcript/${options.id}/`,
+        {
+          responseType: "blob",
+        }
+      );
       return { response: response, name: options.name };
     } catch (error) {
       return thunkAPI.rejectWithValue(error.message);
@@ -33,12 +65,15 @@ export const textDownload = createAsyncThunk(
 );
 
 export const pdfDownload = createAsyncThunk(
-  "prospects/pdfDownload",
+  "player/pdfDownload",
   async (options, thunkAPI) => {
     try {
-      let response = await authAxios(`${API}/applicants/download/get-pdf/${options.id}/`, {
-        responseType: "blob",
-      });
+      let response = await authAxios(
+        `${API}/applicants/download/get-pdf/${options.id}/`,
+        {
+          responseType: "blob",
+        }
+      );
       return { response: response, name: options.name };
     } catch (error) {
       return thunkAPI.rejectWithValue(error.message);
@@ -50,9 +85,12 @@ export const excelDownload = createAsyncThunk(
   "player/excelDownload",
   async (options, thunkAPI) => {
     try {
-      let response = await authAxios(`${API}/applicants/download/get-excel/${options.id}/`, {
-        responseType: "blob",
-      });
+      let response = await authAxios(
+        `${API}/applicants/download/get-excel/${options.id}/`,
+        {
+          responseType: "blob",
+        }
+      );
       return { response: response, name: options.name };
     } catch (error) {
       return thunkAPI.rejectWithValue(error.message);
@@ -64,9 +102,12 @@ export const videoDownload = createAsyncThunk(
   "player/videoDownload",
   async (options, thunkAPI) => {
     try {
-      let response = await authAxios(`${API}/applicants/download/get-video/${options.id}/`, {
-        responseType: "blob",
-      });
+      let response = await authAxios(
+        `${API}/applicants/download/get-video/${options.id}/`,
+        {
+          responseType: "blob",
+        }
+      );
       return { data: response.data, name: options.name };
     } catch (error) {
       return thunkAPI.rejectWithValue(error.message);
@@ -90,8 +131,21 @@ export const fetchPlayerHistoryPreview = createAsyncThunk(
   "player/fetchPlayerHistoryPreview",
   async (options, thunkAPI) => {
     try {
-      const state = thunkAPI.getState()
-      let response = await authAxios(`${API}/applicants/chat/history-preview/${state.playerData.playerIdMap[state.playerData.player]}/`);
+      const state = thunkAPI.getState();
+      let response;
+      if (options?.multiple) {
+        response = await authAxios(
+          `${API}/applicants/chat/history-preview/${state.playerData.selectedPlayers
+            .map((item) => state.playerData.playerIdMap[item])
+            .join(",")}/`
+        );
+      } else {
+        response = await authAxios(
+          `${API}/applicants/chat/history-preview/${
+            state.playerData.playerIdMap[state.playerData.player]
+          }/`
+        );
+      }
       return response.data;
     } catch (error) {
       return thunkAPI.rejectWithValue(error.message);
@@ -103,8 +157,10 @@ export const fetchChatText = createAsyncThunk(
   "player/fetchChatText",
   async (arg, thunkAPI) => {
     try {
-      const state = thunkAPI.getState()
-      let response = await authAxios(`${API}/applicants/chat/history/${state.playerData.currentHistoryId}/`);
+      const state = thunkAPI.getState();
+      let response = await authAxios(
+        `${API}/applicants/chat/history/${state.playerData.currentHistoryId}/`
+      );
       return response.data;
     } catch (error) {
       return thunkAPI.rejectWithValue(error.message);
@@ -116,8 +172,10 @@ export const downloadHistory = createAsyncThunk(
   "player/downloadHistory",
   async (options, thunkAPI) => {
     try {
-      let response = await authAxios(`${API}/applicants/chat/history/${options.id}/`);
-      return {data: response.data, ...options};
+      let response = await authAxios(
+        `${API}/applicants/chat/history/${options.id}/`
+      );
+      return { data: response.data, ...options };
     } catch (error) {
       return thunkAPI.rejectWithValue(error.message);
     }
@@ -143,7 +201,7 @@ export const sendQuestion = createAsyncThunk(
   async (options, thunkAPI) => {
     try {
       let response = await authAxios.post(`${API}/applicants/chat/`, options);
-      return {data: response.data, ...options};
+      return { data: response.data, ...options };
     } catch (error) {
       return thunkAPI.rejectWithValue(error.message);
     }
@@ -155,13 +213,38 @@ export const playerSlice = createSlice({
   initialState,
   reducers: {
     setPlayer: (state, action) => {
-      state.player = action.payload;
+      let c = action.payload;
+      console.log(c, state.player, state.selectedPlayers, state.compareMode);
+      if (state.player === c) {
+        state.player = "";
+      } else {
+        if (state.player || state.selectedPlayers.length) {
+          if (state.compareMode) {
+            if (state.selectedPlayers.includes(c)) {
+              let p = state.selectedPlayers.slice();
+              p.splice(p.indexOf(c), 1);
+
+              state.compareMode = false;
+              state.player = p[0];
+              state.selectedPlayers = [];
+            } else {
+              state.selectedPlayers = [state.selectedPlayers[1], c];
+            }
+          } else {
+            state.selectedPlayers = [state.player, c];
+            state.compareMode = true;
+            state.player = "";
+          }
+        } else {
+          state.player = c;
+        }
+      }
+    },
+    setPinned: (state, action) => {
+      state.pinned = [...new Set(action.payload)];
     },
     setPlayers: (state, action) => {
       state.players = action.payload;
-    },
-    setCurrentHistory: (state, action) => {
-      state.currentChat = action.payload;
     },
     setMode: (state, action) => {
       state.mode = action.payload;
@@ -180,31 +263,32 @@ export const playerSlice = createSlice({
     },
     setSelectedPlayers: (state, action) => {
       state.selectedPlayers = action.payload;
-    }
+    },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchPlayers.pending, (state) => {
-      })
+      .addCase(fetchPlayers.pending, (state) => {})
       .addCase(fetchPlayers.fulfilled, (state, action) => {
         state.allPlayers = Object.keys(action.payload);
         state.players = Object.keys(action.payload);
         state.playerIdMap = action.payload;
       })
       .addCase(fetchPlayers.rejected, (state) => {})
-      
+
       .addCase(sendQuestion.pending, (state, action) => {})
       .addCase(sendQuestion.fulfilled, (state, action) => {
         if (state.currentHistoryId === action.payload.chat_history_id) {
-          state.currentChat[state.currentChat.length-1].push(action.payload.data[0])
+          state.currentChat[state.currentChat.length - 1].push(
+            action.payload.data[0]
+          );
           state.currentHistoryId = action.payload.data[1];
         }
       })
       .addCase(sendQuestion.rejected, (state) => {})
-      
+
       .addCase(fetchPlayerHistoryPreview.pending, (state, action) => {
         if (action?.meta?.arg?.reset === true) {
-          state.playerHistoryPreview = []
+          state.playerHistoryPreview = [];
         }
       })
       .addCase(fetchPlayerHistoryPreview.fulfilled, (state, action) => {
@@ -214,7 +298,7 @@ export const playerSlice = createSlice({
         ]);
       })
       .addCase(fetchPlayerHistoryPreview.rejected, (state) => {})
-      
+
       .addCase(fetchChatText.pending, (state) => {})
       .addCase(fetchChatText.fulfilled, (state, action) => {
         state.currentChat = action.payload;
@@ -235,45 +319,50 @@ export const playerSlice = createSlice({
           let body = text;
           let maxLength = 2040; // Set the maximum length for the mailto link
           let ellipsis = "...";
-      
+
           // Create the initial mailto link
           var mailtoLink =
-              "mailto:" +
-              "?subject=" +
-              encodeURIComponent(subject) +
-              "&body=";
-      
+            "mailto:" + "?subject=" + encodeURIComponent(subject) + "&body=";
+
           // Segment the body text into graphemes
-          const segmenter = new Intl.Segmenter("en", { granularity: "grapheme" });
+          const segmenter = new Intl.Segmenter("en", {
+            granularity: "grapheme",
+          });
           const segItr = segmenter.segment(body);
           const segArr = Array.from(segItr, ({ segment }) => segment);
-      
+
           // Check the length of the encoded body and truncate the body if necessary
           let encodedBody = encodeURIComponent(body);
           if (mailtoLink.length + encodedBody.length > maxLength) {
-              let availableLength = maxLength - mailtoLink.length - encodeURIComponent(ellipsis).length;
-              let newBodyLength = body.length;
-      
-              // Determine the new body length based on the encoded body length
-              while (encodeURIComponent(segArr.slice(0, newBodyLength).join("")).length > availableLength) {
-                  newBodyLength--;
-              }
-      
-              // Truncate the body text using graphemes and add ellipsis
-              body = segArr.slice(0, newBodyLength).join("") + ellipsis;
-              mailtoLink += encodeURIComponent(body);
+            let availableLength =
+              maxLength -
+              mailtoLink.length -
+              encodeURIComponent(ellipsis).length;
+            let newBodyLength = body.length;
+
+            // Determine the new body length based on the encoded body length
+            while (
+              encodeURIComponent(segArr.slice(0, newBodyLength).join(""))
+                .length > availableLength
+            ) {
+              newBodyLength--;
+            }
+
+            // Truncate the body text using graphemes and add ellipsis
+            body = segArr.slice(0, newBodyLength).join("") + ellipsis;
+            mailtoLink += encodeURIComponent(body);
           } else {
-              mailtoLink += encodedBody;
+            mailtoLink += encodedBody;
           }
-      
+
           // Create an anchor element
           var link = window.document.createElement("a");
           link.href = mailtoLink;
           link.target = "_blank";
-      
+
           // Trigger a click on the anchor element
           link.click();
-      } else {
+        } else {
           const url = window.URL.createObjectURL(
             new Blob([text], { type: "text/plain" })
           );
@@ -315,7 +404,7 @@ export const playerSlice = createSlice({
         state.downloading = false;
         toast.info("Content not available");
       })
-      
+
       .addCase(excelDownload.pending, (state) => {
         state.downloading = true;
       })
@@ -411,6 +500,16 @@ export const playerSlice = createSlice({
         state.downloading = false;
         toast.info("Content not available");
       })
+
+      .addCase(togglePinned.pending, (state) => {})
+      .addCase(togglePinned.fulfilled, (state, action) => {})
+      .addCase(togglePinned.rejected, (state) => {})
+
+      .addCase(fetchPinned.pending, (state) => {})
+      .addCase(fetchPinned.fulfilled, (state, action) => {
+        state.pinned = action.payload.data;
+      })
+      .addCase(fetchPinned.rejected, (state) => {});
   },
 });
 
@@ -425,6 +524,7 @@ export const {
   setMode,
   setCompareMode,
   setSelectedPlayers,
+  setPinned,
 } = playerSlice.actions;
 
 export default playerSlice.reducer;

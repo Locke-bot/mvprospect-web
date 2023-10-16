@@ -15,6 +15,8 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import DownloadIcon from "@mui/icons-material/CloudDownloadOutlined";
 import ShareIcon from "@mui/icons-material/Share";
 
+import DocDup from "../../assets/document-duplication.png";
+
 import { makeStyles } from "@mui/styles";
 import {
   Button,
@@ -34,7 +36,10 @@ import {
   deleteHistory,
   downloadHistory,
   fetchChatText,
+  setCurrentHistory,
   setCurrentHistoryId,
+  setPlayer,
+  setPlayerHistoryPreview,
 } from "../../redux/features/playerSlice";
 
 const drawerWidth = 270;
@@ -191,6 +196,22 @@ const Drawer = styled(MuiDrawer, {
   }),
 }));
 
+function arraysEqual(a, b) {
+  if (a === b) return true;
+  if (a == null || b == null) return false;
+  if (a.length !== b.length) return false;
+
+  // If you don't care about the order of the elements inside
+  // the array, you should sort both arrays here.
+  // Please note that calling sort on an array will modify that array.
+  // you might want to clone your array first.
+
+  for (var i = 0; i < a.length; ++i) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
+}
+
 export default function MiniDrawer({ value }) {
   const classes = useStyles();
   const dispatch = useDispatch();
@@ -198,9 +219,13 @@ export default function MiniDrawer({ value }) {
   const [open, setOpen] = React.useState(false);
   const [historyDelete, setHistoryDelete] = React.useState(null);
   const [historyDeleteIndex, setHistoryDeleteIndex] = React.useState(null);
-  const { player, currentHistoryId, playerHistoryPreview } = useSelector(
-    (state) => state.playerData
-  );
+  const {
+    player,
+    playerIdMap,
+    currentHistoryId,
+    playerHistoryPreview,
+    selectedPlayers,
+  } = useSelector((state) => state.playerData);
 
   const [loaders, setLoaders] = useState({});
 
@@ -224,7 +249,36 @@ export default function MiniDrawer({ value }) {
     setOpen(false);
   };
 
-  const chatClicked = (id) => {
+  const chatClicked = (id, players) => {
+    // players is an array of player ids depending on how many players have the chat history together
+    console.log(
+      playerHistoryPreview.filter((item) => {
+        let p = item[3].split(",");
+        console.log(players, p, item[3]);
+        return arraysEqual(players, p);
+      })
+    );
+    dispatch(
+      setPlayerHistoryPreview(
+        playerHistoryPreview.filter((item) => {
+          let p = item[3].split(",");
+          return arraysEqual(players, p);
+        })
+      )
+    );
+    players.splice(players.indexOf(playerIdMap[player]), 1);
+    console.log(players, player);
+    if (players.length) {
+      for (let i of players) {
+        let j = Object.keys(playerIdMap).filter(function (key) {
+          return playerIdMap[key] === i;
+        })[0];
+
+        if (!selectedPlayers.includes(j)) {
+          dispatch(setPlayer(j));
+        }
+      }
+    }
     dispatch(setCurrentHistoryId(id));
     dispatch(fetchChatText(id));
   };
@@ -236,8 +290,7 @@ export default function MiniDrawer({ value }) {
     });
   };
 
-  return (
-    !value ? 
+  return !value ? (
     <>
       <Dialog
         open={!!historyDelete}
@@ -301,7 +354,11 @@ export default function MiniDrawer({ value }) {
 
       <Box sx={{ display: "flex" }}>
         <CssBaseline />
-        <Drawer variant="permanent" open={open && (value??0) === 0} anchor="right">
+        <Drawer
+          variant="permanent"
+          open={open && (value ?? 0) === 0}
+          anchor="right"
+        >
           <Toolbar className={`${classes.headerToolBar}`}>
             <DrawerHeader style={{ paddingLeft: open ? 0 : undefined }}>
               <IconButton
@@ -334,7 +391,7 @@ export default function MiniDrawer({ value }) {
                       className={`history ${classes.chatHistory} ${
                         item[2] === currentHistoryId ? classes.selectedChat : ""
                       }`}
-                      onClick={() => chatClicked(item[2])}
+                      onClick={() => chatClicked(item[2], item[3].split(","))}
                     >
                       <Box
                         className={`${classes.flex} ${classes.alignItemsCenter} ${classes.h100} ${classes.flexGrow} ${classes.overflowHidden}`}
@@ -346,9 +403,13 @@ export default function MiniDrawer({ value }) {
                               open ? handleDrawerClose : handleDrawerOpen
                             }
                           >
-                            <DescriptionIcon
-                              style={{ color: "rgb(175, 187, 198)" }}
-                            />
+                            {item[3].split(",").length > 1 ? (
+                              <img src={DocDup} alt="" width={20} />
+                            ) : (
+                              <DescriptionIcon
+                                style={{ color: "rgb(175, 187, 198)" }}
+                              />
+                            )}
                           </ListItemButton>
                         </Box>
                         <Box
@@ -455,9 +516,13 @@ export default function MiniDrawer({ value }) {
                       className={classes.listItemButton}
                       onClick={open ? handleDrawerClose : handleDrawerOpen}
                     >
-                      <DescriptionIcon
-                        style={{ color: "rgb(175, 187, 198)" }}
-                      />
+                      {item[3].split(",").length > 1 ? (
+                        <img src={DocDup} alt="" width={20} />
+                      ) : (
+                        <DescriptionIcon
+                          style={{ color: "rgb(175, 187, 198)" }}
+                        />
+                      )}
                     </ListItemButton>
                   )}
                 </ListItem>
@@ -466,6 +531,8 @@ export default function MiniDrawer({ value }) {
           </Box>
         </Drawer>
       </Box>
-    </> : <></>
+    </>
+  ) : (
+    <></>
   );
 }

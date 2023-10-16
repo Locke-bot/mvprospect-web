@@ -19,6 +19,7 @@ import {
   setPlayerHistoryPreview,
   setCurrentChat,
   setPlayer,
+  fetchPinned,
 } from "../redux/features/playerSlice";
 
 import { useDispatch, useSelector } from "react-redux";
@@ -111,14 +112,15 @@ const CustomTab = styled((props) => {
     },
   };
   return (
-    <div
-      style={{
-        position: "relative",
-        flex: props.label === "Settings" ? 1 : undefined,
-      }}
-    >
-      <Tab disableRipple {...p} />
-    </div>
+    <></>
+    // <div
+    //   style={{
+    //     position: "relative",
+    //     flex: props.label === "Settings" ? 1 : undefined,
+    //   }}
+    // >
+    //   <Tab disableRipple {...p} />
+    // </div>
   );
 })(() => ({
   "&:hover": {
@@ -139,7 +141,7 @@ function TabsComponent() {
   const classes = useStyles();
   const dispatch = useDispatch();
 
-  const { compareMode, player, playerIdMap } = useSelector((state) => state.playerData);
+  const { compareMode, player, selectedPlayers } = useSelector((state) => state.playerData);
   const [value, setValue] = useState(0);
 
   const handleChange = (_, newValue) => {
@@ -154,18 +156,29 @@ function TabsComponent() {
 
   useEffect(() => {
     dispatch(fetchPlayers());
+    dispatch(fetchPinned());
   }, []);
 
   useEffect(() => {
     if (player) {
+      dispatch(setCurrentChat([]));
+      dispatch(setCurrentHistoryId(null));
       dispatch(fetchPlayerHistoryPreview({ reset: true }));
-    } else {
+    } else if (selectedPlayers.length) {
+      
+    }
+    else {
+      dispatch(setCurrentChat([]));
+      dispatch(setCurrentHistoryId(null));
       dispatch(setPlayerHistoryPreview([]));
     }
-    dispatch(setCurrentChat([]));
-    dispatch(setCurrentHistory([]));
-    dispatch(setCurrentHistoryId(null));
   }, [player]);
+
+  useEffect(() => {
+    if (selectedPlayers.length) {
+      dispatch(fetchPlayerHistoryPreview({ reset: false, multiple: true }));
+    }
+  }, [selectedPlayers]);
 
   return (
     <Box className={classes.mainBox}>
@@ -194,16 +207,18 @@ function TabsComponent() {
               {...a11yProps(1)}
               right
             />
-            <Button
-              variant="outlined"
-              onClick={() => {
-                localStorage.removeItem("authTokens");
-                window.location.href = window.location.origin;
-              }}
-              className={classes.logoutButton}
-            >
-              Logout
-            </Button>
+            <Box className={classes.logoutButtonCover}>
+              <Button
+                variant="outlined"
+                onClick={() => {
+                  localStorage.removeItem("authTokens");
+                  window.location.href = window.location.origin;
+                }}
+                className={classes.logoutButton}
+              >
+                Logout
+              </Button>
+            </Box>
           </Tabs>
         </Box>
 
@@ -272,6 +287,11 @@ const useStyles = makeStyles({
     "&:hover": {
       opacity: 1
     },
+  },
+  logoutButtonCover: {
+    display: "flex",
+    width: "100%",
+    justifyContent: "end",
   },
   boxHeader: {
     display: "flex",

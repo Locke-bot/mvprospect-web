@@ -7,15 +7,29 @@ import {
   textDownload,
   setPlayers,
   setPlayer,
-  setCompareMode,
-  setSelectedPlayers,
+  setPinned,
+  togglePinned,
   pdfDownload,
+  setCurrentChat,
+  setCurrentHistoryId,
+  setPlayerHistoryPreview,
+  fetchPlayers,
 } from "../../../redux/features/playerSlice";
 
 import clsx from "clsx";
 import { styled } from "@mui/material/styles";
 import TableCell from "@mui/material/TableCell";
-import { Box, CircularProgress, Divider, IconButton, ListItemIcon, Menu, MenuItem, Tooltip, Typography } from "@mui/material";
+import {
+  Box,
+  CircularProgress,
+  Divider,
+  IconButton,
+  ListItemIcon,
+  Menu,
+  MenuItem,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 
 import ArrowDropUpOutlinedIcon from "@mui/icons-material/ArrowDropUpOutlined";
 import ArrowDropDownOutlinedIcon from "@mui/icons-material/ArrowDropDownOutlined";
@@ -25,6 +39,8 @@ import DescriptionIcon from "@mui/icons-material/Description";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import VideoFileIcon from "@mui/icons-material/VideoFile";
 import TableChartIcon from "@mui/icons-material/TableChart";
+import PushPinOutlinedIcon from "@mui/icons-material/PushPinOutlined";
+import PushPinIcon from "@mui/icons-material/PushPin";
 
 import Paper from "@mui/material/Paper";
 import { AutoSizer, Column, Table } from "react-virtualized";
@@ -148,6 +164,37 @@ class MuiVirtualizedTable extends React.PureComponent {
         align="left"
         onClick={(e) => this.props.playersClicked(e, rowData["player"])}
       >
+        {console.log(this.props.pinned, "cv", rowData["player"])}
+        <IconButton
+          disableRipple
+          title="Pin"
+          style={{
+            right: 80,
+            position: "absolute",
+            color:
+              this.props.radioValue !== rowData["player"]
+                ? "#AFBBC6"
+                : undefined,
+          }}
+          className={`${
+            this.props.pinned.includes(rowData["player"]) ? "" : "hover-menu"
+          }`}
+          onClick={(e) => {
+            e.stopPropagation();
+            this.props.pinned.includes(rowData["player"])
+              ? this.props.removeFromPinned(rowData["player"])
+              : this.props.addToPinned(rowData["player"]);
+          }}
+        >
+          {this.props.pinned.includes(rowData["player"]) ? (
+            <PushPinIcon
+              style={{ color: "#000000", transform: "scale(0.7)" }}
+            />
+          ) : (
+            <PushPinOutlinedIcon style={{ transform: "scale(0.7)" }} />
+          )}
+        </IconButton>
+
         <IconButton
           title={
             this.props.downloading ? "Download ongoing..." : "Download files"
@@ -305,8 +352,16 @@ export default function ReactVirtualizedTable({ rows }) {
   const playersRef = useRef({});
   const dispatch = useDispatch();
 
-  const { allPlayers, compareMode, player, players, playerIdMap, pinned, selectedPlayers, downloading  } =
-    useSelector((state) => state.playerData);
+  const {
+    allPlayers,
+    compareMode,
+    player,
+    players,
+    playerIdMap,
+    pinned,
+    selectedPlayers,
+    downloading,
+  } = useSelector((state) => state.playerData);
 
   const { searchValue } = useSelector((state) => state.uiData);
   const [nameSort, setNameSort] = useState(0);
@@ -317,7 +372,7 @@ export default function ReactVirtualizedTable({ rows }) {
 
   const [prospectDownloading, setProspectDownloading] = useState(null);
   const [downloadType, setDownloadType] = useState(null);
-
+  console.log(pinned, "pinned");
   const reorderByLastName = (array, mode) => {
     array = array.slice();
     array = array.filter((item) => !pinned.includes(item));
@@ -380,30 +435,10 @@ export default function ReactVirtualizedTable({ rows }) {
       return;
     }
 
-    if (player === c) {
-      dispatch(setPlayer(""));
-    } else {
-      if (player || selectedPlayers.length) {
-        if (compareMode) {
-          if (selectedPlayers.includes(c)) {
-            let p = selectedPlayers.slice();
-            p.splice(p.indexOf(c), 1);
-
-            dispatch(setCompareMode(false));
-            dispatch(setPlayer(p[0]));
-            dispatch(setSelectedPlayers([]));
-          } else {
-            dispatch(setSelectedPlayers([selectedPlayers[1], c]));
-          }
-        } else {
-          dispatch(setSelectedPlayers([player, c]));
-          dispatch(setCompareMode(true));
-          dispatch(setPlayer(""));
-        }
-      } else {
-        dispatch(setPlayer(c));
-      }
-    }
+    dispatch(setCurrentChat([]));
+    dispatch(setCurrentHistoryId(null));
+    dispatch(setPlayerHistoryPreview([]));
+    dispatch(setPlayer(c));
   };
 
   const sortFunc = () => {
@@ -437,7 +472,7 @@ export default function ReactVirtualizedTable({ rows }) {
   };
 
   const downloadText = (player) => {
-    console.log('lalkd', player)
+    console.log("lalkd", player);
     if (!downloading) {
       dispatch(
         textDownload({
@@ -552,7 +587,7 @@ export default function ReactVirtualizedTable({ rows }) {
               </Typography>
             </Box>
           </Tooltip>
-        </MenuItem>        
+        </MenuItem>
         <MenuItem
           onClick={() =>
             downloading ? void 0 : downloadExcel(downloadsElPlayer)
@@ -641,11 +676,34 @@ export default function ReactVirtualizedTable({ rows }) {
           nameSort={nameSort}
           rowGetter={({ index }) => rows[index]}
           players={compareMode ? selectedPlayers : [player]}
-          pinned={pinned}
           sortFunc={sortFunc}
           setDownloadsElPlayer={setDownloadsElPlayer}
           setOpenDownloads={setOpenDownloads}
           setDownloadsEl={setDownloadsEl}
+          pinned={pinned}
+          addToPinned={(name) => {
+            console.log("add", name, playerIdMap[name]);
+            dispatch(
+              setPinned([name].concat(pinned.filter((item) => item !== name)))
+            );
+            dispatch(
+              togglePinned({
+                id: playerIdMap[name],
+              })
+            ).then(() => {
+              dispatch(fetchPlayers());
+            });
+          }}
+          removeFromPinned={(name) => {
+            dispatch(setPinned(pinned.filter((item) => item !== name)));
+            dispatch(
+              togglePinned({
+                id: playerIdMap[name],
+              })
+            ).then(() => {
+              dispatch(fetchPlayers());
+            });
+          }}
           columns={[
             {
               width: "100%",

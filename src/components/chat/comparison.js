@@ -36,7 +36,7 @@ if ("webkitSpeechRecognition" in window) {
 }
 
 let responseTimeout = null;
-const TIMEOUT = 11000;
+const TIMEOUT = 20000;
 
 function Chat() {
   const classes = useStyles();
@@ -118,7 +118,7 @@ function Chat() {
         dispatch(
           setCurrentHistoryId(JSON.parse(lastMessage.data).history_uuid)
         );
-        dispatch(fetchPlayerHistoryPreview({ reset: false, multiple: true }));        
+        dispatch(fetchPlayerHistoryPreview({ reset: false, multiple: true }));      
         setControlsText("");
       }
       if (JSON.parse(lastMessage?.data)?.message === "token") {

@@ -164,7 +164,6 @@ class MuiVirtualizedTable extends React.PureComponent {
         align="left"
         onClick={(e) => this.props.playersClicked(e, rowData["player"])}
       >
-        {console.log(this.props.pinned, "cv", rowData["player"])}
         <IconButton
           disableRipple
           title="Pin"

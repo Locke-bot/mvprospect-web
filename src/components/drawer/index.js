@@ -188,7 +188,7 @@ export default function PermanentDrawerLeft() {
         <Toolbar
           className={`${classes.topToolBar} ${classes.mainPaddingRight}`}
         >
-          <img src={Logo} height={59} alt="" />
+          <img src={Logo} height={59} alt="" style={{width: "50%", height: "auto"}}/>
         </Toolbar>
         <Toolbar
           className={`${classes.flexColumn} ${classes.flexGrow} ${classes.alignItemsLeft} ${classes.pr0}`}
@@ -232,6 +232,7 @@ export default function PermanentDrawerLeft() {
                 }}
               />
             </FormControl>
+            {console.log(players)}
             {players.length ? <Table
               rows={players.map((item) => {
                 return {

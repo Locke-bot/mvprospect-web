@@ -232,14 +232,13 @@ export default function PermanentDrawerLeft() {
                 }}
               />
             </FormControl>
-            {console.log(players)}
-            {players.length ? <Table
+            <Table
               rows={players.map((item) => {
                 return {
                   player: item,
                 };
               })}
-            /> : <></>}
+            />
           </Box>
         </Toolbar>
       </Drawer>

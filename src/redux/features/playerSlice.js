@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { API, authAxios, getDispositionFilename } from "../../components/api";
+import axios from 'axios'
 import JSZip from "jszip";
 import { toast } from "react-toastify";
 
@@ -34,7 +35,6 @@ export const fetchPinned = createAsyncThunk(
 export const togglePinned = createAsyncThunk(
   "player/togglePinned",
   async (options, thunkAPI) => {
-    console.log("toggle?");
     try {
       let response = await authAxios.post(
         `${API}/applicants/pinned/${options.id}/`
@@ -102,13 +102,13 @@ export const videoDownload = createAsyncThunk(
   "player/videoDownload",
   async (options, thunkAPI) => {
     try {
-      let response = await authAxios(
-        `${API}/applicants/download/get-video/${options.id}/`,
-        {
-          responseType: "blob",
-        }
-      );
-      return { data: response.data, name: options.name };
+      let response = await authAxios(`${API}/applicants/download/get-video/${options.id}/`,);
+
+      let response2 = await axios.get(response.data, {
+        responseType: 'blob',
+      });
+
+      return { data: response2.data, name: options.name };
     } catch (error) {
       return thunkAPI.rejectWithValue(error.message);
     }
@@ -214,7 +214,6 @@ export const playerSlice = createSlice({
   reducers: {
     setPlayer: (state, action) => {
       let c = action.payload;
-      console.log(c, state.player, state.selectedPlayers, state.compareMode);
       if (state.player === c) {
         state.player = "";
       } else {

@@ -164,6 +164,7 @@ class MuiVirtualizedTable extends React.PureComponent {
         align="left"
         onClick={(e) => this.props.playersClicked(e, rowData["player"])}
       >
+        
         <IconButton
           disableRipple
           title="Pin"
@@ -371,7 +372,7 @@ export default function ReactVirtualizedTable({ rows }) {
 
   const [prospectDownloading, setProspectDownloading] = useState(null);
   const [downloadType, setDownloadType] = useState(null);
-  console.log(pinned, "pinned");
+  
   const reorderByLastName = (array, mode) => {
     array = array.slice();
     array = array.filter((item) => !pinned.includes(item));
@@ -471,7 +472,6 @@ export default function ReactVirtualizedTable({ rows }) {
   };
 
   const downloadText = (player) => {
-    console.log("lalkd", player);
     if (!downloading) {
       dispatch(
         textDownload({
@@ -681,7 +681,6 @@ export default function ReactVirtualizedTable({ rows }) {
           setDownloadsEl={setDownloadsEl}
           pinned={pinned}
           addToPinned={(name) => {
-            console.log("add", name, playerIdMap[name]);
             dispatch(
               setPinned([name].concat(pinned.filter((item) => item !== name)))
             );

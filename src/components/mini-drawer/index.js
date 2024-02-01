@@ -246,13 +246,6 @@ export default function MiniDrawer({ value }) {
 
   const chatClicked = (id, players) => {
     // players is an array of player ids depending on how many players have the chat history together
-    console.log(
-      playerHistoryPreview.filter((item) => {
-        let p = item[3].split(",");
-        console.log(players, p, item[3]);
-        return arraysEqual(players, p);
-      })
-    );
     dispatch(
       setPlayerHistoryPreview(
         playerHistoryPreview.filter((item) => {
@@ -262,7 +255,6 @@ export default function MiniDrawer({ value }) {
       )
     );
     players.splice(players.indexOf(playerIdMap[player]), 1);
-    console.log(players, player);
     if (players.length) {
       for (let i of players) {
         let j = Object.keys(playerIdMap).filter(function (key) {

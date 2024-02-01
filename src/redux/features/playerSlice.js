@@ -314,7 +314,7 @@ export const playerSlice = createSlice({
         text = text.trim();
 
         if (action.payload?.type === "share") {
-          let subject = "MVPChat Text";
+          let subject = "MVP Chat Text";
           let body = text;
           let maxLength = 2040; // Set the maximum length for the mailto link
           let ellipsis = "...";

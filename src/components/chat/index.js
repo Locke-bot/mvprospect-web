@@ -229,7 +229,7 @@ function Chat() {
                         }}
                       />
                       <a
-                        href={`mailto:?subject=MVPChat Text&body=${answers[index]}`}
+                        href={`mailto:?subject=MVP Chat Text&body=${answers[index]}`}
                         target="_blank"
                         style={{ textDecoration: "none", display: "flex" }}
                       >

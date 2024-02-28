@@ -31,7 +31,7 @@ import {
 
 import Table from "./prospects/prospectTable";
 
-import Logo from "../../assets/logo.png";
+import Logo from "../../assets/avrij.png";
 
 const useStyles = makeStyles({
   accountBox: {
@@ -188,7 +188,7 @@ export default function PermanentDrawerLeft() {
         <Toolbar
           className={`${classes.topToolBar} ${classes.mainPaddingRight}`}
         >
-          <img src={Logo} height={59} alt="" style={{width: "50%", height: "auto"}}/>
+          <img src={Logo} height={32} alt="" style={{width: "50%", height: "auto"}}/>
         </Toolbar>
         <Toolbar
           className={`${classes.flexColumn} ${classes.flexGrow} ${classes.alignItemsLeft} ${classes.pr0}`}

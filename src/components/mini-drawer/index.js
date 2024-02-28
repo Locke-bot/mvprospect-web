@@ -513,7 +513,7 @@ export default function MiniDrawer({ value }) {
             </List>
           </Box>
         </Drawer>
-      </Box>
+      </Box>      
     </>
   ) : (
     <></>

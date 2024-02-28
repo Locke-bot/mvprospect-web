@@ -348,7 +348,7 @@ function Chat() {
           </IconButton>
         </Box>
       </Box>
-      <Box sx={{position: "absolute", right: "5px", zIndex: 5000, fontSize: "small", bottom: "5px"}}>
+      <Box sx={{bottom: "5px", position: "absolute", zIndex: 5000, fontSize: "small", color: "rgb(75, 81, 85)"}}>
         MVProspect v1.1
       </Box>
     </Box>

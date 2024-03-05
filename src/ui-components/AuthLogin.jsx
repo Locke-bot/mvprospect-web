@@ -78,7 +78,7 @@ const JWTLogin = () => {
         password: "",
       }}
       validationSchema={Yup.object().shape({
-        firstName: Yup.string().max(255).required("First name is required"),
+        firstName: Yup.string().max(255).required("Username is required"),
         password: Yup.string().max(255).required("Password is required"),
       })}
       onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
@@ -127,7 +127,7 @@ const JWTLogin = () => {
             sx={{ ...customInput }}
           >
             <InputLabel htmlFor="outlined-adornment-firstname-login">
-              First Name
+              Username
             </InputLabel>
             <OutlinedInput
               id="outlined-adornment-firstname-login"

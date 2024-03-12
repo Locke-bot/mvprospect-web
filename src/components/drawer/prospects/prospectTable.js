@@ -164,12 +164,11 @@ class MuiVirtualizedTable extends React.PureComponent {
         align="left"
         onClick={(e) => this.props.playersClicked(e, rowData["player"])}
       >
-        
         <IconButton
           disableRipple
           title="Pin"
           style={{
-            right: 80,
+            right: 30,
             position: "absolute",
             color:
               this.props.radioValue !== rowData["player"]
@@ -201,7 +200,7 @@ class MuiVirtualizedTable extends React.PureComponent {
           }
           style={{
             position: "absolute",
-            right: 40,
+            right: 5,
             color:
               this.props.radioValue !== rowData["player"]
                 ? "#AFBBC6"
@@ -256,35 +255,90 @@ class MuiVirtualizedTable extends React.PureComponent {
             paddingLeft: columnIndex === 0 ? "32px" : "20px",
           }}
           align={columns[columnIndex].numeric || false ? "right" : "left"}
-          onClick={() => this.props.sortFunc(columnIndex === 0)}
+          onClick={() =>
+            this.props.sortFunc(columnIndex == 0 ? "player" : "sim")
+          }
         >
           <Typography
             className={`align-items-center d-flex noselect font-small ${classes.sortHeaders}`}
           >
             {label}
-            {this.props.nameSort === 0 ? (
+            {columnIndex == 0 ? (
+              this.props.nameSort === 0 ? (
+                <>
+                  <ArrowDropUpOutlinedIcon
+                    sx={{ height: "17px", color: "#bdbebf" }}
+                    className="scale-6"
+                  />
+                  <ArrowDropDownOutlinedIcon
+                    sx={{
+                      height: "17px",
+                      marginLeft: "-12px",
+                      color: "#bdbebf",
+                    }}
+                    className="scale-6 -ml-18"
+                  />
+                </>
+              ) : this.props.nameSort === 1 ? (
+                <>
+                  <ArrowDropUpOutlinedIcon
+                    sx={{ height: "17px" }}
+                    className="scale-6"
+                  />
+                  <ArrowDropDownOutlinedIcon
+                    sx={{
+                      height: "17px",
+                      marginLeft: "-12px",
+                      color: "#bdbebf",
+                    }}
+                    className="scale-6 -ml-18"
+                  />
+                </>
+              ) : this.props.nameSort === 2 ? (
+                <>
+                  <ArrowDropUpOutlinedIcon
+                    sx={{ height: "17px", color: "#bdbebf" }}
+                    className="scale-6"
+                  />
+                  <ArrowDropDownOutlinedIcon
+                    sx={{ height: "17px", marginLeft: "-12px" }}
+                    className="scale-6 -ml-18"
+                  />
+                </>
+              ) : (
+                <></>
+              )
+            ) : this.props.simSort === 0 ? (
               <>
                 <ArrowDropUpOutlinedIcon
                   sx={{ height: "17px", color: "#bdbebf" }}
                   className="scale-6"
                 />
                 <ArrowDropDownOutlinedIcon
-                  sx={{ height: "17px", marginLeft: "-12px", color: "#bdbebf" }}
+                  sx={{
+                    height: "17px",
+                    marginLeft: "-12px",
+                    color: "#bdbebf",
+                  }}
                   className="scale-6 -ml-18"
                 />
               </>
-            ) : this.props.nameSort === 1 ? (
+            ) : this.props.simSort === 1 ? (
               <>
                 <ArrowDropUpOutlinedIcon
                   sx={{ height: "17px" }}
                   className="scale-6"
                 />
                 <ArrowDropDownOutlinedIcon
-                  sx={{ height: "17px", marginLeft: "-12px", color: "#bdbebf" }}
+                  sx={{
+                    height: "17px",
+                    marginLeft: "-12px",
+                    color: "#bdbebf",
+                  }}
                   className="scale-6 -ml-18"
                 />
               </>
-            ) : this.props.nameSort === 2 ? (
+            ) : this.props.simSort === 2 ? (
               <>
                 <ArrowDropUpOutlinedIcon
                   sx={{ height: "17px", color: "#bdbebf" }}
@@ -358,6 +412,7 @@ export default function ReactVirtualizedTable({ rows }) {
     player,
     players,
     playerIdMap,
+    playerSimilarityMap,
     pinned,
     selectedPlayers,
     downloading,
@@ -365,6 +420,7 @@ export default function ReactVirtualizedTable({ rows }) {
 
   const { searchValue } = useSelector((state) => state.uiData);
   const [nameSort, setNameSort] = useState(0);
+  const [simSort, setSimSort] = useState(0);
 
   const [openDownloads, setOpenDownloads] = useState(false);
   const [downloadsEl, setDownloadsEl] = useState(null);
@@ -372,7 +428,7 @@ export default function ReactVirtualizedTable({ rows }) {
 
   const [prospectDownloading, setProspectDownloading] = useState(null);
   const [downloadType, setDownloadType] = useState(null);
-  
+
   const reorderByLastName = (array, mode) => {
     array = array.slice();
     array = array.filter((item) => !pinned.includes(item));
@@ -387,7 +443,6 @@ export default function ReactVirtualizedTable({ rows }) {
         })
       );
     } else if (mode === 2) {
-      // || mode == 0 ) {
       return pinned.concat(
         array
           .sort(function (a, b) {
@@ -395,6 +450,28 @@ export default function ReactVirtualizedTable({ rows }) {
           })
           .reverse()
       );
+    }
+  };
+
+  const reorderBySimScore = (array, mode) => {
+    array = array.slice();
+    array = array.filter((item) => !pinned.includes(item));
+  
+    if (mode === 0) {
+      return allPlayers;
+    }
+  
+    if (mode === 1 || mode === 2) {
+      const sortedArray = array.sort((a, b) => {
+        const aScore = playerSimilarityMap[playerIdMap[a]][0];
+        const bScore = playerSimilarityMap[playerIdMap[b]][0];
+        return aScore - bScore;
+      });
+  
+      if (mode === 2) {
+        return pinned.concat(sortedArray.reverse());
+      }
+      return pinned.concat(sortedArray);
     }
   };
 
@@ -410,9 +487,22 @@ export default function ReactVirtualizedTable({ rows }) {
     dispatch(setPlayers(result));
   }, [nameSort, allPlayers]);
 
+  useEffect(() => {
+    let result = filterPlayers(
+      reorderByLastName(allPlayers, simSort),
+      searchValue
+    );
+    dispatch(setPlayers(result));
+  }, [simSort, allPlayers]);
+
   const filterPlayers = (players, search) => {
     search = searchValue.trim();
-    players = nameSort !== 0 ? reorderByLastName(players, nameSort) : players;
+    players =
+      nameSort !== 0
+        ? reorderByLastName(players, nameSort)
+        : simSort !== 0
+        ? reorderBySimScore(players, simSort)
+        : players;
 
     if (search) {
       players = players.filter((player) => {
@@ -421,14 +511,6 @@ export default function ReactVirtualizedTable({ rows }) {
     }
     return players;
   };
-
-  useEffect(() => {
-    let result = filterPlayers(
-      reorderByLastName(allPlayers, nameSort),
-      searchValue
-    );
-    dispatch(setPlayers(result));
-  }, [nameSort, allPlayers]);
 
   const playersClicked = (e, c) => {
     if (!c.trim()) {
@@ -441,8 +523,14 @@ export default function ReactVirtualizedTable({ rows }) {
     dispatch(setPlayer(c));
   };
 
-  const sortFunc = () => {
-    setNameSort((nameSort + 1) % 3);
+  const sortFunc = (name) => {
+    if (name == "player") {
+      setNameSort((nameSort + 1) % 3);
+      setSimSort(0);
+    } else if ((name = "sim")) {
+      setSimSort((simSort + 1) % 3);
+      setNameSort(0);
+    }
   };
 
   const downloadVideo = (player) => {
@@ -673,6 +761,7 @@ export default function ReactVirtualizedTable({ rows }) {
           playersClicked={playersClicked}
           rowCount={rows.length}
           nameSort={nameSort}
+          simSort={simSort}
           rowGetter={({ index }) => rows[index]}
           players={compareMode ? selectedPlayers : [player]}
           sortFunc={sortFunc}
@@ -703,10 +792,21 @@ export default function ReactVirtualizedTable({ rows }) {
             });
           }}
           columns={[
+            // {
+            //   width: "100%",
+            //   label: `Players (${players.length})`,
+            //   dataKey: "player",
+            // },
             {
-              width: "100%",
+              width: 300,
               label: `Players (${players.length})`,
               dataKey: "player",
+            },
+            {
+              width: 200,
+              label: "Pro Sim",
+              dataKey: "simScore",
+              numeric: true,
             },
           ]}
         />

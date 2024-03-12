@@ -33,80 +33,6 @@ import Table from "./prospects/prospectTable";
 
 import Logo from "../../assets/avrij.png";
 
-const useStyles = makeStyles({
-  accountBox: {
-    display: "flex",
-    gap: "14px",
-    width: "100%",
-    marginTop: "15px",
-    marginBottom: "15px",
-  },
-  flex: {
-    display: "flex",
-  },
-  flexColumn: {
-    flexDirection: "column",
-  },
-  flexGrow: {
-    flexGrow: 1,
-  },
-  name: {
-    font: "normal normal normal 16px/16px Roboto",
-    letterSpacing: 0,
-    color: "#4B5155",
-  },
-  desc: {
-    font: "normal normal normal 16px/16px Roboto",
-    letterSpacing: 0,
-    color: "#7B8793",
-  },
-  team: {
-    font: "normal normal normal 16px/16px Roboto",
-    letterSpacing: 0,
-    color: "#4B5155",
-  },
-  topToolBar: {
-    minHeight: "82px !important",
-    display: "flex",
-    justifyContent: "center",
-  },
-  marginBottom12: {
-    marginBottom: "12px",
-  },
-  h100: {
-    height: "100%",
-  },
-  w100: {
-    width: "100%",
-  },
-  prospectWord: {
-    font: "normal normal normal 16px/16px Roboto",
-    letterSpacing: "0 !important",
-    color: "#4B5155",
-  },
-  spaceEvenly: {
-    justifyContent: "space-evenly",
-  },
-  alignItemsLeft: {
-    alignItems: "start !important",
-  },
-  mainPaddingRight: {
-    paddingRight: "23px !important",
-  },
-  pr0: {
-    paddingRight: "0 !important",
-  },
-  notchedOutline: {
-    border: "1px solid #AFBBC6 !important",
-  },
-  searchField: {
-    '& .MuiInputBase-root.MuiOutlinedInput-root': {
-      marginBottom: 5,
-      borderRadius: 20,
-    },
-  }
-});
-
 const Typography = withStyles({
   root: {
     fontFamily: "Roboto !important",
@@ -128,7 +54,7 @@ export default function PermanentDrawerLeft() {
   const [openSettings, setOpenSettings] = useState(false);
   const [settingsEl, setSettingsEl] = useState(false);
 
-  const { players } =
+  const { playerSimilarityMap, playerIdMap, players } =
     useSelector((state) => state.playerData);
   const { searchValue } = useSelector((state) => state.uiData);
 
@@ -236,6 +162,7 @@ export default function PermanentDrawerLeft() {
               rows={players.map((item) => {
                 return {
                   player: item,
+                  simScore: playerSimilarityMap[playerIdMap[item]][0]
                 };
               })}
             />
@@ -245,3 +172,78 @@ export default function PermanentDrawerLeft() {
     </Box>
   );
 }
+
+
+const useStyles = makeStyles({
+  accountBox: {
+    display: "flex",
+    gap: "14px",
+    width: "100%",
+    marginTop: "15px",
+    marginBottom: "15px",
+  },
+  flex: {
+    display: "flex",
+  },
+  flexColumn: {
+    flexDirection: "column",
+  },
+  flexGrow: {
+    flexGrow: 1,
+  },
+  name: {
+    font: "normal normal normal 16px/16px Roboto",
+    letterSpacing: 0,
+    color: "#4B5155",
+  },
+  desc: {
+    font: "normal normal normal 16px/16px Roboto",
+    letterSpacing: 0,
+    color: "#7B8793",
+  },
+  team: {
+    font: "normal normal normal 16px/16px Roboto",
+    letterSpacing: 0,
+    color: "#4B5155",
+  },
+  topToolBar: {
+    minHeight: "82px !important",
+    display: "flex",
+    justifyContent: "center",
+  },
+  marginBottom12: {
+    marginBottom: "12px",
+  },
+  h100: {
+    height: "100%",
+  },
+  w100: {
+    width: "100%",
+  },
+  prospectWord: {
+    font: "normal normal normal 16px/16px Roboto",
+    letterSpacing: "0 !important",
+    color: "#4B5155",
+  },
+  spaceEvenly: {
+    justifyContent: "space-evenly",
+  },
+  alignItemsLeft: {
+    alignItems: "start !important",
+  },
+  mainPaddingRight: {
+    paddingRight: "23px !important",
+  },
+  pr0: {
+    paddingRight: "0 !important",
+  },
+  notchedOutline: {
+    border: "1px solid #AFBBC6 !important",
+  },
+  searchField: {
+    '& .MuiInputBase-root.MuiOutlinedInput-root': {
+      marginBottom: 5,
+      borderRadius: 20,
+    },
+  }
+});

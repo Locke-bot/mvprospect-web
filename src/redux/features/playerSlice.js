@@ -10,6 +10,7 @@ const initialState = {
   player: "",
   playerIdMap: null,
   players: [],
+  playerSimilarityMap: [],
   allPlayers: [],
   currentChat: [],
   currentHistoryId: "",
@@ -268,9 +269,18 @@ export const playerSlice = createSlice({
     builder
       .addCase(fetchPlayers.pending, (state) => {})
       .addCase(fetchPlayers.fulfilled, (state, action) => {
-        state.allPlayers = Object.keys(action.payload);
-        state.players = Object.keys(action.payload);
-        state.playerIdMap = action.payload;
+
+        const originalObject = action.payload[0]
+        const transposedObject = Object.entries(originalObject).reduce((acc, [key, value]) => {
+            acc[value] = key;
+            return acc;
+        }, {});
+
+        state.allPlayers = Object.keys(transposedObject);
+        state.players = Object.keys(transposedObject);
+        state.playerIdMap = transposedObject;
+
+        state.playerSimilarityMap = action.payload[1]
       })
       .addCase(fetchPlayers.rejected, (state) => {})
 

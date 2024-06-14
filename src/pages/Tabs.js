@@ -1,11 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  Box,
-  Button,
-  Tab,
-  Tabs,
-  Toolbar,
-} from "@mui/material";
+import { Box, Button, Tab, Tabs, Toolbar } from "@mui/material";
 import { makeStyles, styled } from "@mui/styles";
 
 import Drawer from "../components/drawer";
@@ -35,7 +29,7 @@ function TabPanel(props) {
 
   const { name, children, value, index, ...other } = props;
 
-  const { player } = useSelector((state) => state.playerData);
+  const { player, selectedPlayers } = useSelector((state) => state.playerData);
 
   return (
     <div
@@ -58,21 +52,35 @@ function TabPanel(props) {
           <Box className={classes.boxHeader}>
             <Box>
               MVP Chat -{" "}
-              {!player ? (
+              {selectedPlayers.length ? (
+                <div style={{ display: "inline-flex", gap: "10px" }}>
+                  {selectedPlayers.map((player) => {
+                    return (
+                      <div
+                        style={{ display: "inline-flex", alignItems: "center" }}
+                      >
+                        {player}
+                        <CloseIcon
+                          style={{ width: 18, cursor: "pointer" }}
+                          onClick={() => dispatch(setPlayer(player))}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : !player ? (
                 "select a player to begin"
               ) : (
                 <div style={{ display: "inline-flex", alignItems: "center" }}>
                   {player}
                   <CloseIcon
                     style={{ width: 18, cursor: "pointer" }}
-                    onClick={() => dispatch(setPlayer(null))}
+                    onClick={() => dispatch(setPlayer(player))}
                   />
                 </div>
               )}
             </Box>
-            <Box>
-              {props?.compareMode ? "Compare Mode" : ""}
-            </Box>
+            <Box>{props?.compareMode ? "Compare Mode" : ""}</Box>
           </Box>
         )}
       </Toolbar>
@@ -90,9 +98,7 @@ function a11yProps(index) {
 
 const CustomTab = styled((props) => {
   const dispatch = useDispatch();
-  const { player, playerIdMap } = useSelector(
-    (state) => state.playerData
-  );
+  const { player, playerIdMap } = useSelector((state) => state.playerData);
 
   let p = {
     ...props,
@@ -141,7 +147,9 @@ function TabsComponent() {
   const classes = useStyles();
   const dispatch = useDispatch();
 
-  const { compareMode, player, selectedPlayers } = useSelector((state) => state.playerData);
+  const { compareMode, player, selectedPlayers } = useSelector(
+    (state) => state.playerData
+  );
   const [value, setValue] = useState(0);
 
   const handleChange = (_, newValue) => {
@@ -165,9 +173,7 @@ function TabsComponent() {
       dispatch(setCurrentHistoryId(null));
       dispatch(fetchPlayerHistoryPreview({ reset: true }));
     } else if (selectedPlayers.length) {
-      
-    }
-    else {
+    } else {
       dispatch(setCurrentChat([]));
       dispatch(setCurrentHistoryId(null));
       dispatch(setPlayerHistoryPreview([]));
@@ -285,7 +291,7 @@ const useStyles = makeStyles({
     backgroundColor: "#FFF !important",
 
     "&:hover": {
-      opacity: 1
+      opacity: 1,
     },
   },
   logoutButtonCover: {

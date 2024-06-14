@@ -58,7 +58,7 @@ function Chat() {
   const [answer, setAnswer] = React.useState("");
   const [question, setQuestion] = React.useState("");
   const chatRef = useRef(null);
-  const inputRef = useRef(null)
+  const inputRef = useRef(null);
 
   const { currentChat, currentHistoryId, playerIdMap, selectedPlayers } =
     useSelector((state) => state.playerData);
@@ -66,6 +66,15 @@ function Chat() {
   const [answers, setAnswers] = React.useState([]);
   const [questions, setQuestions] = React.useState([]);
   const [recording, setRecording] = React.useState(null);
+  const [triggerSend, setTriggerSend] = useState(false);
+
+  const defaultPrompts = ["Compare their mindsets.", 
+    "What are their dominant traits.",
+    "Who has a better mindset for baseball."];
+
+  // const defaultPrompts = ["Compare and contrast both players.", 
+  //   "What are their dominant traits.",
+  //   "Who is a better pick?"];
 
   useEffect(() => {
     const authTokens = JSON.parse(localStorage.getItem("authTokens"));
@@ -88,6 +97,13 @@ function Chat() {
   useEffect(() => {
     dispatch(setCurrentChat([]));
   }, [selectedPlayers]);
+
+  useEffect(() => {
+    if (triggerSend) {
+      send();
+      setTriggerSend(false);
+    }
+  }, [triggerSend]);
 
   useEffect(() => {
     if (lastMessage !== null) {
@@ -118,7 +134,7 @@ function Chat() {
         dispatch(
           setCurrentHistoryId(JSON.parse(lastMessage.data).history_uuid)
         );
-        dispatch(fetchPlayerHistoryPreview({ reset: false, multiple: true }));      
+        dispatch(fetchPlayerHistoryPreview({ reset: false, multiple: true }));
         setControlsText("");
       }
       if (JSON.parse(lastMessage?.data)?.message === "token") {
@@ -164,18 +180,25 @@ function Chat() {
   }, [answers]);
 
   useEffect(() => {
-    if (!(!selectedPlayers.length || controlsText === "Stop generating") && inputRef.current) {
+    if (
+      !(!selectedPlayers.length || controlsText === "Stop generating") &&
+      inputRef.current
+    ) {
       setTimeout(() => {
         if (inputRef.current) {
           inputRef.current.focus();
         }
-    }, 500);
+      }, 500);
     }
-  }, [selectedPlayers, controlsText])
+  }, [selectedPlayers, controlsText]);
 
   const send = () => {
     setRecording(false);
-    if (question.trim() && selectedPlayers.length && controlsText !== "Stop generating") {
+    if (
+      question.trim() &&
+      selectedPlayers.length &&
+      controlsText !== "Stop generating"
+    ) {
       if (controlsText === "Regenerate response") {
         dispatch(
           setCurrentChat(currentChat.slice(0, -1).concat([[question.trim()]]))
@@ -192,7 +215,7 @@ function Chat() {
           action: "doc",
           question: question.trim(),
           chat_history_id: currentHistoryId,
-          player_ids: selectedPlayers.map((item) => playerIdMap[item])
+          player_ids: selectedPlayers.map((item) => playerIdMap[item]),
         })
       );
     }
@@ -202,64 +225,84 @@ function Chat() {
     <Box className={classes.mainBox}>
       <Box className={classes.innerBox}>
         <Box className={classes.questionAnswer} ref={chatRef}>
-          {questions.map((question, index) => {
-            return (
-              <>
-                <Box className={classes.question}>
-                  <Typography style={{ lineHeight: "29px" }}>
-                    {question}
-                  </Typography>
-                  <Box
-                    className={classes.menu}
-                    onMouseEnter={() => setVisibleMenu(index)}
-                    onMouseLeave={() => setVisibleMenu(null)}
-                  >
+          {questions?.length ? (
+            questions.map((question, index) => {
+              return (
+                <>
+                  <Box className={classes.question}>
+                    <Typography style={{ lineHeight: "29px" }}>
+                      {question}
+                    </Typography>
                     <Box
-                      className={classes.submenu}
-                      style={{
-                        display: visibleMenu === index ? undefined : "none",
-                      }}
+                      className={classes.menu}
+                      onMouseEnter={() => setVisibleMenu(index)}
+                      onMouseLeave={() => setVisibleMenu(null)}
                     >
-                      <CloudDownloadIcon
-                        className={classes.menuIcon}
-                        onClick={() => {
-                          const url = window.URL.createObjectURL(
-                            new Blob([answers[index]], { type: "text/plain" })
-                          );
-                          const link = window.document.createElement("a");
-                          link.href = url;
-                          link.setAttribute("download", `${question}`);
-                          window.document.body.appendChild(link);
-                          link.click();
+                      <Box
+                        className={classes.submenu}
+                        style={{
+                          display: visibleMenu === index ? undefined : "none",
                         }}
-                      />
-                      <a
-                        href={`mailto:?subject=MVP Chat Text&body=${answers[index]}`}
-                        target="_blank"
-                        style={{ textDecoration: "none", display: "flex" }}
                       >
-                        <ShareIcon className={classes.menuIcon} />
-                      </a>
+                        <CloudDownloadIcon
+                          className={classes.menuIcon}
+                          onClick={() => {
+                            const url = window.URL.createObjectURL(
+                              new Blob([answers[index]], { type: "text/plain" })
+                            );
+                            const link = window.document.createElement("a");
+                            link.href = url;
+                            link.setAttribute("download", `${question}`);
+                            window.document.body.appendChild(link);
+                            link.click();
+                          }}
+                        />
+                        <a
+                          href={`mailto:?subject=MVP Chat Text&body=${answers[index]}`}
+                          target="_blank"
+                          style={{ textDecoration: "none", display: "flex" }}
+                        >
+                          <ShareIcon className={classes.menuIcon} />
+                        </a>
+                      </Box>
+                      <MoreVertOutlined />
                     </Box>
-                    <MoreVertOutlined />
                   </Box>
-                </Box>
-                {answers[index] ? (
-                  <Box className={classes.answer}>
-                    <div
-                      dangerouslySetInnerHTML={{
-                        __html: marked(answers[index]),
-                      }}
-                      className={`${classes.chatAnswer} text-area`}
-                      style={{ width: "100%" }}
-                    />
+                  {answers[index] ? (
+                    <Box className={classes.answer}>
+                      <div
+                        dangerouslySetInnerHTML={{
+                          __html: marked(answers[index]),
+                        }}
+                        className={`${classes.chatAnswer} text-area`}
+                        style={{ width: "100%" }}
+                      />
+                    </Box>
+                  ) : (
+                    <></>
+                  )}
+                </>
+              );
+            })
+          ) : selectedPlayers?.length ? (
+            <Box className={classes.promptContainer}>
+              {defaultPrompts.map((prompt) => {
+                return (
+                  <Box
+                    onClick={() => {
+                      setQuestion(prompt);
+                      setTriggerSend(true);
+                    }}
+                    className={classes.promptBox}
+                  >
+                    {prompt}
                   </Box>
-                ) : (
-                  <></>
-                )}
-              </>
-            );
-          })}
+                );
+              })}
+            </Box>
+          ) : (
+            <></>
+          )}
         </Box>
         <Box
           className={classes.typedQuestionBox}
@@ -485,6 +528,36 @@ export const useStyles = makeStyles({
       color: "#6E6E6E",
     },
   },
+  promptContainer: {
+    display: "flex",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: "20px",
+    height: "100%",
+    width: "100%",
+  },
+  promptBox: {
+    flex: "0 0 25%",
+    height: "101px",
+    padding: "10px",
+    boxSizing: "border-box",
+    textAlign: "center",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    border: "0 solid #e3e3e3",
+    boxSizing: "border-box",
+    borderRadius: "1rem",
+    borderWidth: "1px",
+    borderColor: "rgba(0,0,0,.1)",
+    color: "#646464",
+    fontSize: "15px",
+    cursor: "pointer",
+    "&:hover": {
+      backgroundColor: "#d0d0d0",
+    }
+  },  
 });
 
 export default Chat;

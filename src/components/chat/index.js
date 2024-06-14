@@ -58,14 +58,20 @@ function Chat() {
   const [answer, setAnswer] = React.useState("");
   const [question, setQuestion] = React.useState("");
   const chatRef = useRef(null);
-  const inputRef = useRef(null)
+  const inputRef = useRef(null);
 
-  const { player, playerIdMap, currentHistoryId, currentChat } =
-    useSelector((state) => state.playerData);
+  const { player, playerIdMap, currentHistoryId, currentChat } = useSelector(
+    (state) => state.playerData
+  );
 
   const [answers, setAnswers] = React.useState([]);
   const [questions, setQuestions] = React.useState([]);
   const [recording, setRecording] = React.useState(null);
+  const [triggerSend, setTriggerSend] = useState(false);
+
+  const defaultPrompts = ["Write a two sentence statement to describe this player's mindset.", 
+    "Write a summary for their mindset traits.",
+    "List top 5 mindset traits."];
 
   useEffect(() => {
     const authTokens = JSON.parse(localStorage.getItem("authTokens"));
@@ -84,6 +90,13 @@ function Chat() {
       }
     }
   }, []);
+
+  useEffect(() => {
+    if (triggerSend) {
+      send();
+      setTriggerSend(false);
+    }
+  }, [triggerSend]);
 
   useEffect(() => {
     if (lastMessage !== null) {
@@ -164,9 +177,9 @@ function Chat() {
         if (inputRef.current) {
           inputRef.current.focus();
         }
-    }, 500);
+      }, 500);
     }
-  }, [player, controlsText])
+  }, [player, controlsText]);
 
   const send = () => {
     setRecording(false);
@@ -197,72 +210,82 @@ function Chat() {
     <Box className={classes.mainBox}>
       <Box className={classes.innerBox}>
         <Box className={classes.questionAnswer} ref={chatRef}>
-          {questions.map((question, index) => {
-            return (
-              <>
-                <Box className={classes.question}>
-                  <Typography style={{ lineHeight: "29px" }}>
-                    {question}
-                  </Typography>
-                  <Box
-                    className={classes.menu}
-                    onMouseEnter={() => setVisibleMenu(index)}
-                    onMouseLeave={() => setVisibleMenu(null)}
-                  >
+          {questions?.length ? (
+            questions.map((question, index) => {
+              return (
+                <>
+                  <Box className={classes.question}>
+                    <Typography style={{ lineHeight: "29px" }}>
+                      {question}
+                    </Typography>
                     <Box
-                      className={classes.submenu}
-                      style={{
-                        display: visibleMenu === index ? undefined : "none",
-                      }}
+                      className={classes.menu}
+                      onMouseEnter={() => setVisibleMenu(index)}
+                      onMouseLeave={() => setVisibleMenu(null)}
                     >
-                      <CloudDownloadIcon
-                        className={classes.menuIcon}
-                        onClick={() => {
-                          const url = window.URL.createObjectURL(
-                            new Blob([answers[index]], { type: "text/plain" })
-                          );
-                          const link = window.document.createElement("a");
-                          link.href = url;
-                          link.setAttribute("download", `${question}`);
-                          window.document.body.appendChild(link);
-                          link.click();
+                      <Box
+                        className={classes.submenu}
+                        style={{
+                          display: visibleMenu === index ? undefined : "none",
                         }}
-                      />
-                      <a
-                        href={`mailto:?subject=MVP Chat Text&body=${answers[index]}`}
-                        target="_blank"
-                        style={{ textDecoration: "none", display: "flex" }}
                       >
-                        <ShareIcon className={classes.menuIcon} />
-                      </a>
+                        <CloudDownloadIcon
+                          className={classes.menuIcon}
+                          onClick={() => {
+                            const url = window.URL.createObjectURL(
+                              new Blob([answers[index]], { type: "text/plain" })
+                            );
+                            const link = window.document.createElement("a");
+                            link.href = url;
+                            link.setAttribute("download", `${question}`);
+                            window.document.body.appendChild(link);
+                            link.click();
+                          }}
+                        />
+                        <a
+                          href={`mailto:?subject=MVP Chat Text&body=${answers[index]}`}
+                          target="_blank"
+                          style={{ textDecoration: "none", display: "flex" }}
+                        >
+                          <ShareIcon className={classes.menuIcon} />
+                        </a>
+                      </Box>
+                      <MoreVertOutlined />
                     </Box>
-                    <MoreVertOutlined />
                   </Box>
-                </Box>
-                {answers[index] ? (
-                  <Box className={classes.answer}>
-                    <div
-                      dangerouslySetInnerHTML={{
-                        __html: marked(answers[index]),
-                      }}
-                      className={`${classes.chatAnswer} text-area`}
-                      style={{ width: "100%" }}
-                    />
-                  </Box>
-                ) : (
-                  <></>
-                )}
-              </>
-            );
-          })}
+                  {answers[index] ? (
+                    <Box className={classes.answer}>
+                      <div
+                        dangerouslySetInnerHTML={{
+                          __html: marked(answers[index]),
+                        }}
+                        className={`${classes.chatAnswer} text-area`}
+                        style={{ width: "100%" }}
+                      />
+                    </Box>
+                  ) : (
+                    <></>
+                  )}
+                </>
+              );
+            })
+          ) : player ? (
+            <Box className={classes.promptContainer}>
+              {defaultPrompts.map((prompt) => {
+                return <Box onClick={() => {
+                  setQuestion(prompt);
+                  setTriggerSend(true);
+                }} className={classes.promptBox}>{prompt}</Box>
+              })}
+            </Box>
+          ) : (
+            <></>
+          )}
         </Box>
         <Box
           className={classes.typedQuestionBox}
           style={{
-            opacity:
-              !player || controlsText === "Stop generating"
-                ? 0.5
-                : 1,
+            opacity: !player || controlsText === "Stop generating" ? 0.5 : 1,
           }}
         >
           <TextField
@@ -319,9 +342,7 @@ function Chat() {
                 send();
               }
             }}
-            disabled={
-              !player || controlsText === "Stop generating"
-            }
+            disabled={!player || controlsText === "Stop generating"}
             placeholder={
               !player
                 ? "Select a player to make a chat"
@@ -348,7 +369,15 @@ function Chat() {
           </IconButton>
         </Box>
       </Box>
-      <Box sx={{bottom: "5px", position: "absolute", zIndex: 5000, fontSize: "small", color: "rgb(75, 81, 85)"}}>
+      <Box
+        sx={{
+          bottom: "5px",
+          position: "absolute",
+          zIndex: 5000,
+          fontSize: "small",
+          color: "rgb(75, 81, 85)",
+        }}
+      >
         MVProspect v1.1
       </Box>
     </Box>
@@ -482,6 +511,36 @@ export const useStyles = makeStyles({
     "&:hover": {
       color: "#6E6E6E",
     },
+  },
+  promptContainer: {
+    display: "flex",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: "20px",
+    height: "100%",
+    width: "100%",
+  },
+  promptBox: {
+    flex: "0 0 25%",
+    height: "101px",
+    padding: "10px",
+    boxSizing: "border-box",
+    textAlign: "center",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    border: "0 solid #e3e3e3",
+    boxSizing: "border-box",
+    borderRadius: "1rem",
+    borderWidth: "1px",
+    borderColor: "rgba(0,0,0,.1)",
+    color: "#646464",
+    fontSize: "15px",
+    cursor: "pointer",
+    "&:hover": {
+      backgroundColor: "#d0d0d0",
+    }
   },
 });
 

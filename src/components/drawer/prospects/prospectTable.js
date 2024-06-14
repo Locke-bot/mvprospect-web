@@ -21,6 +21,7 @@ import { styled } from "@mui/material/styles";
 import TableCell from "@mui/material/TableCell";
 import {
   Box,
+  Checkbox,
   CircularProgress,
   Divider,
   IconButton,
@@ -160,6 +161,7 @@ class MuiVirtualizedTable extends React.PureComponent {
             !this.props.players.includes(rowData["player"]) && columnIndex === 1
               ? "#7B8793"
               : undefined,
+          paddingLeft: columnIndex === 1 ? "70px" : undefined,
         }}
         align="left"
         onClick={(e) => this.props.playersClicked(e, rowData["player"])}
@@ -262,8 +264,18 @@ class MuiVirtualizedTable extends React.PureComponent {
           <Typography
             className={`align-items-center d-flex noselect font-small ${classes.sortHeaders}`}
           >
+            {columnIndex === 1 ? (
+              <Checkbox
+                onClick={(e) => {
+                  e.stopPropagation();
+                  this.props.playersClicked(e, "Pro Player")
+                }}
+              />
+            ) : (
+              <></>
+            )}
             {label}
-            {columnIndex == 0 ? (
+            {columnIndex === 0 ? (
               this.props.nameSort === 0 ? (
                 <>
                   <ArrowDropUpOutlinedIcon
@@ -456,18 +468,18 @@ export default function ReactVirtualizedTable({ rows }) {
   const reorderBySimScore = (array, mode) => {
     array = array.slice();
     array = array.filter((item) => !pinned.includes(item));
-  
+
     if (mode === 0) {
       return allPlayers;
     }
-  
+
     if (mode === 1 || mode === 2) {
       const sortedArray = array.sort((a, b) => {
         const aScore = playerSimilarityMap[playerIdMap[a]][0];
         const bScore = playerSimilarityMap[playerIdMap[b]][0];
         return aScore - bScore;
       });
-  
+
       if (mode === 2) {
         return pinned.concat(sortedArray.reverse());
       }
@@ -803,7 +815,7 @@ export default function ReactVirtualizedTable({ rows }) {
               dataKey: "player",
             },
             {
-              width: 200,
+              width: 280,
               label: "Pro Sim",
               dataKey: "simScore",
               numeric: true,

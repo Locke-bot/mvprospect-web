@@ -278,6 +278,7 @@ export const playerSlice = createSlice({
 
         state.allPlayers = Object.keys(transposedObject);
         state.players = Object.keys(transposedObject);
+        transposedObject['Pro Player'] = '6a8cbfe0-7502-42fa-89f3-02b6f4282150'
         state.playerIdMap = transposedObject;
 
         state.playerSimilarityMap = action.payload[1]

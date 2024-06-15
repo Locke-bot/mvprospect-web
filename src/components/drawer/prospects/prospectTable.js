@@ -266,6 +266,7 @@ class MuiVirtualizedTable extends React.PureComponent {
           >
             {columnIndex === 1 ? (
               <Checkbox
+                checked={this.props.proPlayerActive}
                 onClick={(e) => {
                   e.stopPropagation();
                   this.props.playersClicked(e, "Pro Player")
@@ -781,6 +782,7 @@ export default function ReactVirtualizedTable({ rows }) {
           setOpenDownloads={setOpenDownloads}
           setDownloadsEl={setDownloadsEl}
           pinned={pinned}
+          proPlayerActive={player==="Pro Player" || selectedPlayers?.includes("Pro Player")}
           addToPinned={(name) => {
             dispatch(
               setPinned([name].concat(pinned.filter((item) => item !== name)))

@@ -72,9 +72,9 @@ function Chat() {
     "What are their dominant traits.",
     "Who has a better mindset for baseball."];
 
-  // const defaultPrompts = ["Compare and contrast both players.", 
-  //   "What are their dominant traits.",
-  //   "Who is a better pick?"];
+  const proDefaultPrompts = ["Using all the pro scores as the ideal score to achieve, how does this player compare?", 
+    "Show where the player is similar to the pro player benchmark",
+    "Show where the player is not similar to the pro player benchmark"];
 
   useEffect(() => {
     const authTokens = JSON.parse(localStorage.getItem("authTokens"));
@@ -286,7 +286,7 @@ function Chat() {
             })
           ) : selectedPlayers?.length ? (
             <Box className={classes.promptContainer}>
-              {defaultPrompts.map((prompt) => {
+              {(selectedPlayers.includes("Pro Player") ? proDefaultPrompts : defaultPrompts).map((prompt) => {
                 return (
                   <Box
                     onClick={() => {

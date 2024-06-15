@@ -214,6 +214,7 @@ export const playerSlice = createSlice({
   initialState,
   reducers: {
     setPlayer: (state, action) => {
+      console.log(state.player, action.payload)
       let c = action.payload;
       if (state.player === c) {
         state.player = "";
